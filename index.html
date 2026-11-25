@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>우리 반 어드벤트 캘린더</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="서랍을 열면 우리 반 친구 한 명이 뽑히는 크리스마스 어드벤트 캘린더">
+<meta property="og:title" content="우리 반 어드벤트 캘린더">
+<meta property="og:description" content="서랍을 열면 우리 반 친구 한 명이 뽑혀요. 로그인 없이 바로 시작!">
+<meta property="og:image" content="assets/og-image.jpg">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="snow" aria-hidden="true"></canvas>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <img src="assets/logo.webp" alt="" width="40" height="40">
+      <label class="sr-only" for="classSelect">반 선택</label>
+      <select id="classSelect"></select>
+    </div>
+    <nav class="tabs" aria-label="화면 이동">
+      <button type="button" class="tab" data-view="calendar">캘린더</button>
+      <button type="button" class="tab" data-view="roster">명단</button>
+      <button type="button" class="tab" data-view="history">기록</button>
+      <button type="button" class="tab" data-view="settings">설정</button>
+    </nav>
+    <div class="tools">
+      <button type="button" class="icon-btn music" id="bgmBtn" aria-pressed="false" title="배경 음악 켜기/끄기">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor"/><circle cx="17.5" cy="16" r="2.5" fill="currentColor"/></svg>
+        <span class="sr-only">배경 음악</span>
+      </button>
+      <button type="button" class="icon-btn" id="soundBtn" aria-pressed="true" title="효과음 켜기/끄기"></button>
+      <button type="button" class="icon-btn" id="fullBtn" title="전체화면">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="sr-only">전체화면</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+  <section id="view-calendar" class="view" aria-label="캘린더">
+    <div class="cal-head">
+      <img class="title-img" src="assets/title.webp" alt="Advent Calendar">
+      <p class="cal-sub"><span id="calTitle"></span><span class="dot">·</span><span id="calCount"></span></p>
+    </div>
+    <div id="examplePill" class="example-pill" hidden>
+      예시 명단(번호)으로 보여 주는 중이에요. <button type="button" class="link-btn" data-go="roster">우리 반 이름 넣기</button>
+    </div>
+    <div class="calendar" id="calendar">
+      <img class="roof" src="assets/calendar-roof.webp" alt="눈 덮인 지붕 위에 산타 펭귄이 있는 서랍장 지붕">
+      <div class="cabinet">
+        <div class="grid" id="grid"></div>
+      </div>
+      <div class="feet" aria-hidden="true"><span></span><span></span></div>
+    </div>
+    <div id="emptyCal" class="paper empty" hidden>
+      <h2>먼저 학생 명단을 넣어 주세요</h2>
+      <p>명단에 넣은 학생 수만큼 서랍이 생겨요.</p>
+      <button type="button" class="btn btn-red" data-go="roster">명단 넣으러 가기</button>
+    </div>
+  </section>
+
+  <section id="view-roster" class="view" aria-label="학생 명단" hidden>
+    <div class="paper">
+      <h2>학생 명단 <small id="rosterCount"></small></h2>
+      <p class="hint">이름을 한 줄에 한 명씩, 또는 쉼표로 나눠 붙여넣으세요. 학생 수만큼 서랍이 생겨요.</p>
+      <label class="sr-only" for="pasteNames">학생 이름 붙여넣기</label>
+      <textarea id="pasteNames" rows="5" placeholder="김민지&#10;이서준&#10;박하은"></textarea>
+      <div class="row">
+        <button type="button" class="btn btn-green" id="addNames">명단에 추가</button>
+        <button type="button" class="btn btn-ghost" id="replaceNames">이 이름으로 새로 만들기</button>
+      </div>
+      <div class="row numbers">
+        <span>이름 대신 번호로:</span>
+        <label class="sr-only" for="numCount">학생 수</label>
+        <input type="number" id="numCount" min="1" max="60" value="20">
+        <span>명</span>
+        <button type="button" class="btn btn-ghost" id="makeNumbers">1번부터 만들기</button>
+      </div>
+      <ol class="student-list" id="studentList"></ol>
+    </div>
+  </section>
+
+  <section id="view-history" class="view" aria-label="뽑기 기록" hidden>
+    <div class="paper">
+      <h2>뽑기 기록</h2>
+      <p class="hint" id="historySummary"></p>
+      <div class="table-wrap">
+        <table class="history">
+          <thead><tr><th scope="col">서랍</th><th scope="col">이름</th><th scope="col">뽑은 시각</th><th scope="col"><span class="sr-only">취소</span></th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+      <div id="remainingWrap">
+        <h3>아직 뽑히지 않은 학생</h3>
+        <ul class="chips" id="remainingList"></ul>
+      </div>
+      <div class="row">
+        <button type="button" class="btn btn-green standalone-only" id="csvBtn">엑셀(CSV)로 저장</button>
+        <button type="button" class="btn btn-ghost" id="copyTableBtn">표 복사</button>
+        <button type="button" class="btn btn-ghost standalone-only" id="printBtn">인쇄</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-settings" class="view" aria-label="설정" hidden>
+    <div class="paper">
+      <h2>설정</h2>
+      <div class="form-grid">
+        <label for="setTitle">캘린더 제목</label>
+        <input id="setTitle" type="text" maxlength="40">
+        <label for="setStart">시작 날짜</label>
+        <input id="setStart" type="date">
+        <span class="label">날짜 잠금</span>
+        <label class="switch"><input id="setLock" type="checkbox"> 그날이 되어야 서랍을 열 수 있어요</label>
+        <span class="label">주말 건너뛰기</span>
+        <label class="switch"><input id="setWeekend" type="checkbox"> 토·일에는 서랍이 열리지 않아요</label>
+        <span class="label">효과</span>
+        <div class="stack">
+          <label class="switch"><input id="setSound" type="checkbox"> 효과음</label>
+          <label class="switch"><input id="setSnow" type="checkbox"> 눈 내리기</label>
+        </div>
+      </div>
+      <p class="hint" id="lockHint"></p>
+
+      <h3>반 관리</h3>
+      <div class="row">
+        <label class="sr-only" for="className">반 이름</label>
+        <input id="className" type="text" maxlength="30">
+        <button type="button" class="btn btn-ghost" id="renameClass">이름 바꾸기</button>
+      </div>
+      <div class="row">
+        <button type="button" class="btn btn-green" id="newClass">새 반 만들기</button>
+        <button type="button" class="btn btn-danger" id="deleteClass">이 반 삭제</button>
+      </div>
+
+      <h3>백업 · 다른 컴퓨터로 옮기기</h3>
+      <p class="hint">명단과 기록은 이 브라우저에만 저장돼요. 학교 PC와 집 PC를 오갈 때는 백업을 옮겨 주세요.</p>
+      <div class="row">
+        <button type="button" class="btn btn-green standalone-only" id="exportFile">백업 파일 저장</button>
+        <button type="button" class="btn btn-ghost" id="exportCopy">백업 내용 복사</button>
+        <label class="btn btn-ghost file-btn" for="importFile">백업 파일 불러오기</label>
+        <input type="file" id="importFile" accept=".json,application/json" class="sr-only">
+      </div>
+      <details>
+        <summary>백업 내용을 붙여넣어 불러오기</summary>
+        <label class="sr-only" for="importText">백업 내용</label>
+        <textarea id="importText" rows="4" placeholder='{"version":1, ...}'></textarea>
+        <button type="button" class="btn btn-ghost" id="importTextBtn">붙여넣은 내용 불러오기</button>
+      </details>
+
+      <h3>초기화</h3>
+      <div class="row">
+        <button type="button" class="btn btn-ghost" id="resetDraws">이 반 기록만 지우기</button>
+        <button type="button" class="btn btn-danger" id="resetAll">모든 반 · 모든 데이터 지우기</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="overlay" id="resultOverlay" hidden>
+  <div class="result" role="dialog" aria-modal="true" aria-labelledby="resultName">
+    <p class="result-day" id="resultDay"></p>
+    <div class="card">
+      <img src="assets/result-card.webp" alt="" class="card-bg">
+      <img id="resultIllust" class="card-illust" alt="">
+      <div class="card-name"><span id="resultName"></span></div>
+    </div>
+    <div class="row center">
+      <button type="button" class="btn btn-red" id="resultClose">닫기</button>
+      <button type="button" class="btn btn-ghost light" id="resultRedraw">다시 뽑기 (결석 등)</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="confirmOverlay" hidden>
+  <div class="paper confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmMsg">
+    <p id="confirmMsg"></p>
+    <div class="row center">
+      <button type="button" class="btn btn-ghost" id="confirmNo">취소</button>
+      <button type="button" class="btn btn-danger" id="confirmYes">확인</button>
+    </div>
+  </div>
+</div>
+
+<audio id="bgm" src="assets/bgm-silent-night.mp3" loop preload="none"></audio>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
+<script src="storage.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
